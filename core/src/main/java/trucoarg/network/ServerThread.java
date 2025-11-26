@@ -125,4 +125,8 @@ public class ServerThread extends Thread {
         this.clients.clear();
         this.connectedClients = 0;
     }
+
+    public ArrayList<Client> getClients() {
+        return clients;
+    }
 }

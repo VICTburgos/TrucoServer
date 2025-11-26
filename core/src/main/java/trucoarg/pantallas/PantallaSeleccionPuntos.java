@@ -1,5 +1,6 @@
 package trucoarg.pantallas;
 
+import trucoarg.network.Client;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -8,10 +9,13 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import trucoarg.elementos.Imagen;
+import trucoarg.network.ServerThread;
 import trucoarg.ui.Boton;
 import trucoarg.utiles.Configuracion;
 import trucoarg.utiles.Recursos;
 import trucoarg.utiles.Render;
+
+import java.util.ArrayList;
 
 public class PantallaSeleccionPuntos implements Screen {
 
@@ -21,12 +25,14 @@ public class PantallaSeleccionPuntos implements Screen {
     private BitmapFont subtituloFuente;
     private BitmapFont infoFuente; // 🆕 Fuente para el mensaje de ESC
 
+    public ServerThread server;
     private Boton btn15Puntos;
     private Boton btn30Puntos;
 
     private final Object gameInstance;
 
-    public PantallaSeleccionPuntos(Object game) {
+    public PantallaSeleccionPuntos(ServerThread serverThread, Object game) {
+        this.server = serverThread;
         this.gameInstance = game;
     }
 
@@ -39,34 +45,35 @@ public class PantallaSeleccionPuntos implements Screen {
         cargarFuentes();
         crearBotones();
 
-        Gdx.input.setInputProcessor(new com.badlogic.gdx.InputAdapter() {
-            @Override
-            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-                float y = Configuracion.ALTO - screenY;
 
-                if (btn15Puntos.fueClickeado(screenX, y)) {
-                    iniciarJuego(15);
-                    return true;
-                }
 
-                if (btn30Puntos.fueClickeado(screenX, y)) {
-                    iniciarJuego(30);
-                    return true;
-                }
-
-                return false;
-            }
-
-            // 🆕 Detectar tecla ESC
-            @Override
-            public boolean keyDown(int keycode) {
-                if (keycode == Input.Keys.ESCAPE) {
-                    volverAlMenu();
-                    return true;
-                }
-                return false;
-            }
-        });
+//        Gdx.input.setInputProcessor(new com.badlogic.gdx.InputAdapter() {
+//            @Override
+//            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+//                float y = Configuracion.ALTO - screenY;
+//
+//                if (btn15Puntos.fueClickeado(screenX, y)) {
+//                    iniciarJuego(15);
+//                    return true;
+//                }
+//
+//                if (btn30Puntos.fueClickeado(screenX, y)) {
+//                    iniciarJuego(30);
+//                    return true;
+//                }
+//
+//                return false;
+//            }
+//
+//            @Override
+//            public boolean keyDown(int keycode) {
+//                if (keycode == Input.Keys.ESCAPE) {
+//                    volverAlMenu();
+//                    return true;
+//                }
+//                return false;
+//            }
+    //});
     }
 
     private void cargarFuentes() {
@@ -153,6 +160,8 @@ public class PantallaSeleccionPuntos implements Screen {
     @Override
     public void render(float delta) {
         Render.limpiarPantalla(0.1f, 0.1f, 0.15f);
+        ArrayList<Client> clientes = server.getClients();
+        System.out.println(clientes.size());
 
         batch.begin();
 

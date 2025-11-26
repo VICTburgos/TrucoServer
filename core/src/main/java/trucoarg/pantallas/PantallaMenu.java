@@ -6,12 +6,17 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import trucoarg.elementos.Imagen;
 import trucoarg.elementos.Texto;
+import trucoarg.network.GameController;
+import trucoarg.network.ServerThread;
 import trucoarg.ui.EntradasMenu;
 import trucoarg.utiles.Configuracion;
 import trucoarg.utiles.Recursos;
 import trucoarg.utiles.Render;
 
 public class PantallaMenu implements Screen {
+
+    public ServerThread server;
+    public GameController gameController;
 
     private Imagen fondo;
     private SpriteBatch b;
@@ -103,7 +108,9 @@ public class PantallaMenu implements Screen {
             Render.app.setScreen(new PantallaUnJugador());
                 break;
             case 2:
-                Render.app.setScreen(new PantallaSeleccionPuntos(this));
+                server = new ServerThread(gameController);
+                server.start();
+                Render.app.setScreen(new PantallaSeleccionPuntos(server, this));
                 break;
             case 3:
                 Render.app.setScreen(new PantallaConfiguraciones());
