@@ -1,6 +1,10 @@
 package trucoarg.network;
 
 
+import com.badlogic.gdx.Gdx;
+import trucoarg.pantallas.PantallaDosJugadores;
+import trucoarg.pantallas.PantallaSeleccionPuntos;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
@@ -14,6 +18,7 @@ public class ServerThread extends Thread {
     private int connectedClients = 0;
     private ArrayList<Client> clients = new ArrayList<Client>();
     private GameController gameController;
+
 
     public ServerThread(GameController gameController) {
         this.gameController = gameController;
@@ -77,6 +82,10 @@ public class ServerThread extends Thread {
 //                case "Move":
 //                    gameController.move(client.getNum(), Integer.parseInt(parts[1]));
 //                    break;
+                case("Setearpuntos"):
+                    int puntos= Integer.parseInt(parts[1]);
+                    Gdx.app.postRunnable(() -> gameController.setearPuntosIniciales(puntos));
+                break;
             }
         }
     }

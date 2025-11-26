@@ -1,5 +1,6 @@
 package trucoarg.pantallas;
 
+import com.badlogic.gdx.Game;
 import trucoarg.network.Client;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -9,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import trucoarg.elementos.Imagen;
+import trucoarg.network.GameController;
 import trucoarg.network.ServerThread;
 import trucoarg.ui.Boton;
 import trucoarg.utiles.Configuracion;
@@ -17,7 +19,7 @@ import trucoarg.utiles.Render;
 
 import java.util.ArrayList;
 
-public class PantallaSeleccionPuntos implements Screen {
+public class PantallaSeleccionPuntos implements Screen, GameController {
 
     private Imagen fondo;
     private SpriteBatch batch;
@@ -146,7 +148,7 @@ public class PantallaSeleccionPuntos implements Screen {
 
     private void iniciarJuego(int puntosParaGanar) {
         System.out.println("Iniciando juego a " + puntosParaGanar + " puntos");
-        dispose(); // 🆕 Limpiar recursos antes de cambiar
+        dispose();
         Render.app.setScreen(new PantallaDosJugadores(puntosParaGanar));
     }
 
@@ -161,7 +163,8 @@ public class PantallaSeleccionPuntos implements Screen {
     public void render(float delta) {
         Render.limpiarPantalla(0.1f, 0.1f, 0.15f);
         ArrayList<Client> clientes = server.getClients();
-        System.out.println(clientes.size());
+  //      System.out.println(clientes.size());
+
 
         batch.begin();
 
@@ -207,5 +210,15 @@ public class PantallaSeleccionPuntos implements Screen {
         if (infoFuente != null) infoFuente.dispose(); // 🆕
         if (btn15Puntos != null) btn15Puntos.dispose();
         if (btn30Puntos != null) btn30Puntos.dispose();
+    }
+
+    @Override
+    public void startGame() {
+
+    }
+
+    @Override
+    public void setearPuntosIniciales(int puntos) {
+     iniciarJuego(puntos);
     }
 }

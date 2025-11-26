@@ -1,5 +1,6 @@
 package trucoarg.pantallas;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
@@ -13,7 +14,7 @@ import trucoarg.utiles.Configuracion;
 import trucoarg.utiles.Recursos;
 import trucoarg.utiles.Render;
 
-public class PantallaMenu implements Screen {
+public class PantallaMenu implements Screen, GameController {
 
     public ServerThread server;
     public GameController gameController;
@@ -103,15 +104,22 @@ public class PantallaMenu implements Screen {
                 if (Recursos.MUSICA_GENERAL != null) {
                     Recursos.MUSICA_GENERAL.stop();
                     Recursos.MUSICA_GENERAL.setPosition(0);
-                    Recursos.MUSICA_JUEGO.play();
                 }
-            Render.app.setScreen(new PantallaUnJugador());
+                Render.app.setScreen(new PantallaUnJugador());
                 break;
+
             case 2:
-                server = new ServerThread(gameController);
+                PantallaSeleccionPuntos pantallaSeleccion = new PantallaSeleccionPuntos(null, this);
+
+                server = new ServerThread(pantallaSeleccion);
+
+                pantallaSeleccion.server = server;
+
                 server.start();
-                Render.app.setScreen(new PantallaSeleccionPuntos(server, this));
+
+                Render.app.setScreen(pantallaSeleccion);
                 break;
+
             case 3:
                 Render.app.setScreen(new PantallaConfiguraciones());
                 break;
@@ -139,5 +147,15 @@ public class PantallaMenu implements Screen {
     @Override public void dispose() {
         b.dispose();
         fondo.dispose();
+    }
+
+    @Override
+    public void startGame() {
+
+    }
+
+    @Override
+    public void setearPuntosIniciales(int puntos) {
+
     }
 }
