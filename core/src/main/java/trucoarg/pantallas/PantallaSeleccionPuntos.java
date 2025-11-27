@@ -1,6 +1,7 @@
 package trucoarg.pantallas;
 
 import com.badlogic.gdx.Game;
+import trucoarg.elementos.Texto;
 import trucoarg.network.Client;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -23,13 +24,11 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
 
     private Imagen fondo;
     private SpriteBatch batch;
-    private BitmapFont tituloFuente;
-    private BitmapFont subtituloFuente;
-    private BitmapFont infoFuente; // 🆕 Fuente para el mensaje de ESC
-
+    public Texto texto, texto2;
+    public int clientesConectados;
     public ServerThread server;
-    private Boton btn15Puntos;
-    private Boton btn30Puntos;
+//    private Boton btn15Puntos;
+//    private Boton btn30Puntos;
 
     private final Object gameInstance;
 
@@ -43,9 +42,16 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
         fondo = new Imagen(Recursos.FONDODOSJUGADORES);
         fondo.dimensionarImg(Configuracion.ANCHO, Configuracion.ALTO);
         batch = Render.batch;
+        texto= new Texto(Recursos.FUENTE_MENU, 50, Color.WHITE, true);
+        texto.setPosicion(Configuracion.ALTO/2, (Configuracion.ANCHO- texto.getAncho())/2);
+        texto.setTexto("TRUCO EN RED");
 
-        cargarFuentes();
-        crearBotones();
+        texto2= new Texto(Recursos.FUENTE_MENU, 50, Color.WHITE, true);
+        texto2.setPosicion(Configuracion.ALTO/3, (Configuracion.ANCHO- texto.getAncho())/2);
+        texto2.setTexto("Clientes conectados: "+ clientesConectados);
+
+
+//        crearBotones();
 
 
 
@@ -78,78 +84,41 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
     //});
     }
 
-    private void cargarFuentes() {
-        try {
-            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(
-                Gdx.files.internal(Recursos.FUENTE_MENU)
-            );
 
-            FreeTypeFontGenerator.FreeTypeFontParameter paramTitulo =
-                new FreeTypeFontGenerator.FreeTypeFontParameter();
-            paramTitulo.size = 60;
-            paramTitulo.color = Color.WHITE;
-            paramTitulo.borderWidth = 3;
-            paramTitulo.borderColor = new Color(0.2f, 0.4f, 0.6f, 1f);
-            tituloFuente = generator.generateFont(paramTitulo);
 
-            FreeTypeFontGenerator.FreeTypeFontParameter paramSubtitulo =
-                new FreeTypeFontGenerator.FreeTypeFontParameter();
-            paramSubtitulo.size = 30;
-            paramSubtitulo.color = new Color(0.9f, 0.9f, 0.9f, 1f);
-            subtituloFuente = generator.generateFont(paramSubtitulo);
-
-            // 🆕 Fuente para el mensaje de ESC
-            FreeTypeFontGenerator.FreeTypeFontParameter paramInfo =
-                new FreeTypeFontGenerator.FreeTypeFontParameter();
-            paramInfo.size = 24;
-            paramInfo.color = Color.WHITE;
-            infoFuente = generator.generateFont(paramInfo);
-
-            generator.dispose();
-        } catch (Exception e) {
-            System.out.println("Error cargando fuentes: " + e.getMessage());
-            tituloFuente = new BitmapFont();
-            tituloFuente.getData().setScale(4f);
-            subtituloFuente = new BitmapFont();
-            subtituloFuente.getData().setScale(2f);
-            infoFuente = new BitmapFont();
-            infoFuente.getData().setScale(1.5f);
-        }
-    }
-
-    private void crearBotones() {
-        float btnAncho = 300;
-        float btnAlto = 100;
-        float separacion = 30;
-        float centroY = Configuracion.ALTO / 2f - 50;
-
-        float totalAncho = (btnAncho * 2) + separacion;
-        float inicioX = (Configuracion.ANCHO / 2f) - (totalAncho / 2f);
-
-        Color azulArg = new Color(0.4f, 0.6f, 0.85f, 0.9f);
-        Color amarillo = new Color(1f, 0.8f, 0.2f, 0.9f);
-        Color blanco = Color.WHITE;
-        Color borde = new Color(0.2f, 0.4f, 0.6f, 1f);
-
-        btn15Puntos = new Boton("15 PUNTOS",
-            inicioX,
-            centroY,
-            btnAncho,
-            btnAlto);
-        btn15Puntos.setColor(azulArg, blanco, borde);
-
-        btn30Puntos = new Boton("30 PUNTOS",
-            inicioX + btnAncho + separacion,
-            centroY,
-            btnAncho,
-            btnAlto);
-        btn30Puntos.setColor(amarillo, new Color(0.2f, 0.2f, 0.2f, 1f), borde);
-    }
+//    private void crearBotones() {
+//        float btnAncho = 300;
+//        float btnAlto = 100;
+//        float separacion = 30;
+//        float centroY = Configuracion.ALTO / 2f - 50;
+//
+//        float totalAncho = (btnAncho * 2) + separacion;
+//        float inicioX = (Configuracion.ANCHO / 2f) - (totalAncho / 2f);
+//
+//        Color azulArg = new Color(0.4f, 0.6f, 0.85f, 0.9f);
+//        Color amarillo = new Color(1f, 0.8f, 0.2f, 0.9f);
+//        Color blanco = Color.WHITE;
+//        Color borde = new Color(0.2f, 0.4f, 0.6f, 1f);
+//
+//        btn15Puntos = new Boton("15 PUNTOS",
+//            inicioX,
+//            centroY,
+//            btnAncho,
+//            btnAlto);
+//        btn15Puntos.setColor(azulArg, blanco, borde);
+//
+//        btn30Puntos = new Boton("30 PUNTOS",
+//            inicioX + btnAncho + separacion,
+//            centroY,
+//            btnAncho,
+//            btnAlto);
+//        btn30Puntos.setColor(amarillo, new Color(0.2f, 0.2f, 0.2f, 1f), borde);
+//    }
 
     private void iniciarJuego(int puntosParaGanar) {
         System.out.println("Iniciando juego a " + puntosParaGanar + " puntos");
         dispose();
-        Render.app.setScreen(new PantallaDosJugadores(puntosParaGanar));
+        Render.app.setScreen(new PantallaDosJugadores(puntosParaGanar, server));
     }
 
     // 🆕 Método para volver al menú
@@ -167,25 +136,12 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
 
 
         batch.begin();
-
         fondo.dibujar();
+        texto.dibujar();
+        texto2.setTexto("Clientes conectados: "+ clientes.size());
+        texto2.dibujar();
 
-        String titulo = "TRUCO ARGENTINO";
-        float tituloX = Configuracion.ANCHO / 2f - 250;
-        float tituloY = Configuracion.ALTO - 150;
-        tituloFuente.draw(batch, titulo, tituloX, tituloY);
 
-        String subtitulo = "Elegí los puntos para ganar";
-        float subtituloX = Configuracion.ANCHO / 2f - 200;
-        float subtituloY = Configuracion.ALTO - 250;
-        subtituloFuente.draw(batch, subtitulo, subtituloX, subtituloY);
-
-        // 🆕 Mostrar mensaje de ESC
-        String mensajeEsc = "ESC para volver al menú principal...";
-        infoFuente.draw(batch, mensajeEsc, 50, 650);
-
-        btn15Puntos.dibujar(batch);
-        btn30Puntos.dibujar(batch);
 
         batch.end();
     }
@@ -205,11 +161,6 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
     @Override
     public void dispose() {
         if (fondo != null) fondo.dispose();
-        if (tituloFuente != null) tituloFuente.dispose();
-        if (subtituloFuente != null) subtituloFuente.dispose();
-        if (infoFuente != null) infoFuente.dispose(); // 🆕
-        if (btn15Puntos != null) btn15Puntos.dispose();
-        if (btn30Puntos != null) btn30Puntos.dispose();
     }
 
     @Override
@@ -220,5 +171,6 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
     @Override
     public void setearPuntosIniciales(int puntos) {
      iniciarJuego(puntos);
+     server.sendMessageToAll("Iniciar_Partida:"+puntos);
     }
 }

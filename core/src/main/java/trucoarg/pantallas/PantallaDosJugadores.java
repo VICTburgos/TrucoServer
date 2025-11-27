@@ -1,5 +1,6 @@
 package trucoarg.pantallas;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
@@ -7,7 +8,10 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
+import com.sun.management.internal.GarbageCollectorExtImpl;
 import trucoarg.elementos.Imagen;
+import trucoarg.network.GameController;
+import trucoarg.network.ServerThread;
 import trucoarg.personajesDosJugadores.JuegoTruco;
 import trucoarg.personajesDosJugadores.JugadorBase;
 import trucoarg.personajesSolitario.CartaSolitario;
@@ -20,11 +24,11 @@ import trucoarg.utiles.Render;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PantallaDosJugadores implements Screen {
+public class PantallaDosJugadores implements Screen, GameController {
 
     private Imagen fondo;
     private SpriteBatch batch;
-
+    public ServerThread server;
     private JuegoTruco juego;
     private JugadorBase jugador1;
     private JugadorBase jugador2;
@@ -48,7 +52,6 @@ public class PantallaDosJugadores implements Screen {
     private Boton btnQuiero;
     private Boton btnNoQuiero;
 
-    // 🆕 BOTÓN IR AL MAZO
     private Boton btnIrAlMazo;
 
     private BitmapFont fuente;
@@ -65,13 +68,11 @@ public class PantallaDosJugadores implements Screen {
     private float tiempoVictoria = 0f;
     private static final float TIEMPO_MOSTRAR_VICTORIA = 3f;
 
-    public PantallaDosJugadores(int puntosParaGanar) {
+    public PantallaDosJugadores(int puntosParaGanar, ServerThread server) {
+        this.server= server;
         this.puntosParaGanar = puntosParaGanar;
     }
 
-    public PantallaDosJugadores() {
-        this(15);
-    }
 
     @Override
     public void show() {
@@ -79,7 +80,7 @@ public class PantallaDosJugadores implements Screen {
         fondo.dimensionarImg(Configuracion.ANCHO, Configuracion.ALTO);
         batch = Render.batch;
 
-        juego = new JuegoTruco(puntosParaGanar);
+        juego = new JuegoTruco(puntosParaGanar, server);
         jugador1 = juego.getJugador1();
         jugador2 = juego.getJugador2();
 
@@ -484,6 +485,7 @@ public class PantallaDosJugadores implements Screen {
             c.setSize(100, 200);
             c.setPosicion(new Vector2(x + i * dx, y));
             c.setYaJugadas(false);
+
         }
     }
 
@@ -621,5 +623,15 @@ public class PantallaDosJugadores implements Screen {
         fuente.dispose();
         if (fuenteVictoria != null) fuenteVictoria.dispose();
         if (fuenteCanto != null) fuenteCanto.dispose();
+    }
+
+    @Override
+    public void startGame() {
+
+    }
+
+    @Override
+    public void setearPuntosIniciales(int puntos) {
+
     }
 }

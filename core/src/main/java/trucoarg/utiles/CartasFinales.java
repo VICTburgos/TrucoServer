@@ -64,7 +64,7 @@ public enum CartasFinales {
     }
 
     public CartaSolitario crearCarta(){
-        return new CartaSolitario(NUMERO, PALOS_CARTAS, RUTA,390, 60, NIVEL);
+        return new CartaSolitario(NUMERO, PALOS_CARTAS, RUTA,390, 60, NIVEL, this.ordinal());
     }
 }
 

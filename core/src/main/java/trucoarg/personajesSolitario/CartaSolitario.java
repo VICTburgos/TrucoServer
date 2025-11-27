@@ -18,14 +18,15 @@ public class CartaSolitario extends Sprite {
     private Vector2 posicion;
     private float velocidad = 300f;
     private boolean yaJugadas;
-
+    public int id;
     private Rectangle qcyo;
 
-    public CartaSolitario(int NUMERO, PalosCartas PALOS_CARTAS, String rutaImagen, float y, float x, int NIVEL) {
+    public CartaSolitario(int NUMERO, PalosCartas PALOS_CARTAS, String rutaImagen, float y, float x, int NIVEL, int id) {
         super(new Texture(rutaImagen));
         this.NUMERO = NUMERO;
         this.NIVEL= NIVEL;
         this.PALOS_CARTAS = PALOS_CARTAS;
+        this.id= id;
         posicion = new Vector2(x, y);
         setPosition(posicion.x, posicion.y);
 
@@ -114,7 +115,9 @@ public class CartaSolitario extends Sprite {
     }
 
 
-
+    public int getId() {
+        return id;
+    }
 
     public Vector2 getPosicion() {
         return new Vector2(posicion);
@@ -128,7 +131,5 @@ public class CartaSolitario extends Sprite {
     public float getVelocidad() {
         return velocidad;
     }
-
-
 
 }

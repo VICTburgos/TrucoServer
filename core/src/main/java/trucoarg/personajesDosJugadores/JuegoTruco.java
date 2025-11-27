@@ -1,5 +1,6 @@
 package trucoarg.personajesDosJugadores;
 
+import trucoarg.network.ServerThread;
 import trucoarg.personajesSolitario.CartaSolitario;
 import trucoarg.personajesSolitario.MazoSolitario;
 import trucoarg.utiles.ColisionesDosJugadores;
@@ -12,6 +13,7 @@ public class JuegoTruco {
     private final ColisionesDosJugadores colisiones;
     private boolean jugador1EsMano = false;
 
+    public ServerThread server;
     private final Truco gestorTruco = new Truco();
     private final Envido gestorEnvido = new Envido();
 
@@ -33,16 +35,13 @@ public class JuegoTruco {
     private int puntosJ2 = 0;
 
     // 🆕 CONSTRUCTORES
-    public JuegoTruco(int puntosParaGanar) {
+    public JuegoTruco(int puntosParaGanar, ServerThread server) {
         this.puntosParaGanar = puntosParaGanar;
         mazo = new MazoSolitario();
         colisiones = new ColisionesDosJugadores();
+        this.server=server;
         iniciarNuevaMano();
-        System.out.println("🎮 Juego iniciado a " + puntosParaGanar + " puntos");
-    }
 
-    public JuegoTruco() {
-        this(15); // Por defecto 15 puntos
     }
 
     public void iniciarNuevaMano() {
@@ -54,8 +53,8 @@ public class JuegoTruco {
         jugador1EsMano = !jugador1EsMano;
         manoOriginal = jugador1EsMano ? 1 : 2;
 
-        jugador1 = new JugadorBase("Jugador 1", mazo, jugador1EsMano);
-        jugador2 = new JugadorBase("Jugador 2", mazo, !jugador1EsMano);
+        jugador1 = new JugadorBase(1, mazo, jugador1EsMano, server);
+        jugador2 = new JugadorBase(2, mazo, !jugador1EsMano, server);
 
         manoTerminada = false;
         tiradaActual = 1;
