@@ -158,4 +158,9 @@ public class PantallaMenu implements Screen, GameController {
     public void setearPuntosIniciales(int puntos) {
 
     }
+
+    @Override
+    public void procesarJugada(int jugador, int idCarta) {
+
+    }
 }

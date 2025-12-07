@@ -1,9 +1,9 @@
 package trucoarg.personajesDosJugadores;
 
-import trucoarg.network.ServerThread;
 import trucoarg.personajesSolitario.CartaSolitario;
 import trucoarg.personajesSolitario.MazoSolitario;
 import trucoarg.utiles.ColisionesDosJugadores;
+import trucoarg.network.ServerThread;
 
 public class JuegoTruco {
 
@@ -13,14 +13,13 @@ public class JuegoTruco {
     private final ColisionesDosJugadores colisiones;
     private boolean jugador1EsMano = false;
 
-    public ServerThread server;
     private final Truco gestorTruco = new Truco();
     private final Envido gestorEnvido = new Envido();
 
     private boolean envidoYaResuelto = false;
 
-    // 🆕 PUNTOS PARA GANAR
     private int puntosParaGanar = 15;
+    private ServerThread server;
 
     private int manoOriginal;
     private int turnoActual = 1;
@@ -34,14 +33,14 @@ public class JuegoTruco {
     private int puntosJ1 = 0;
     private int puntosJ2 = 0;
 
-    // 🆕 CONSTRUCTORES
+    // ========== CONSTRUCTORES ==========
     public JuegoTruco(int puntosParaGanar, ServerThread server) {
         this.puntosParaGanar = puntosParaGanar;
+        this.server = server;
         mazo = new MazoSolitario();
         colisiones = new ColisionesDosJugadores();
-        this.server=server;
         iniciarNuevaMano();
-
+        System.out.println("🎮 Juego iniciado a " + puntosParaGanar + " puntos");
     }
 
     public void iniciarNuevaMano() {
@@ -65,19 +64,21 @@ public class JuegoTruco {
         cartaJugadaJ2 = null;
 
         System.out.println("Mano original: J" + manoOriginal);
+        System.out.println("Turno inicial: J" + turnoActual);
 
         gestorTruco.reset();
         gestorEnvido.reset();
         envidoYaResuelto = false;
     }
 
+    // ✅✅✅ CORREGIDO: NO cambiar turno aquí, solo registrar la jugada ✅✅✅
     public boolean jugarCarta(int jugador, CartaSolitario carta) {
         System.out.println("\n=== jugarCarta() llamado ===");
         System.out.println("Jugador que intenta jugar: J" + jugador);
         System.out.println("Turno actual: J" + turnoActual);
+        System.out.println("Tirada actual: " + tiradaActual);
         System.out.println("Mano terminada: " + manoTerminada);
         System.out.println("Carta ya jugada: " + carta.getYaJugadas());
-        System.out.println("Hay canto pendiente: " + hayCantoPendiente());
 
         if (manoTerminada) {
             System.out.println("❌ RECHAZADO: Mano terminada");
@@ -96,17 +97,32 @@ public class JuegoTruco {
 
         carta.setYaJugadas(true);
 
+        // ✅ SOLO registrar la carta, NO cambiar el turno todavía
         if (jugador == 1 && cartaJugadaJ1 == null) {
             cartaJugadaJ1 = carta;
-            turnoActual = 2;
-            System.out.println("✅ J1 jugó carta (nivel=" + carta.getNIVEL() + "). Nuevo turno: J2");
+            System.out.println("✅ J1 jugó carta (nivel=" + carta.getNIVEL() + ")");
+
+            // ✅ Si J2 aún no jugó, cambiar turno a J2
+            if (cartaJugadaJ2 == null) {
+                turnoActual = 2;
+                System.out.println("   → Esperando a J2. Nuevo turno: J2");
+            }
             return true;
         }
 
         if (jugador == 2 && cartaJugadaJ2 == null) {
             cartaJugadaJ2 = carta;
-            turnoActual = 1;
-            System.out.println("✅ J2 jugó carta (nivel=" + carta.getNIVEL() + "). Nuevo turno: J1");
+            System.out.println("✅ J2 jugó carta (nivel=" + carta.getNIVEL() + ")");
+
+            // ✅ Si J1 aún no jugó, cambiar turno a J1
+            if (cartaJugadaJ1 == null) {
+                turnoActual = 1;
+                System.out.println("   → Esperando a J1. Nuevo turno: J1");
+            } else {
+                // ✅ Si ambos ya jugaron, NO cambiar turno aquí
+                // El turno se determinará en procesarTirada()
+                System.out.println("   → Ambos jugaron. Procesando tirada...");
+            }
             return true;
         }
 
@@ -114,11 +130,14 @@ public class JuegoTruco {
         return false;
     }
 
+    // ✅✅✅ CORREGIDO: Actualizar turno correctamente después de comparar ✅✅✅
     public int procesarTirada() {
         if (manoTerminada) return -1;
         if (cartaJugadaJ1 == null || cartaJugadaJ2 == null) return -1;
 
-        System.out.println("\n--- procesarTirada() Ronda " + tiradaActual + " ---");
+        System.out.println("\n--- procesarTirada() Tirada " + tiradaActual + " ---");
+        System.out.println("Carta J1: nivel=" + cartaJugadaJ1.getNIVEL());
+        System.out.println("Carta J2: nivel=" + cartaJugadaJ2.getNIVEL());
 
         int resultado;
         if (cartaJugadaJ1.getNIVEL() > cartaJugadaJ2.getNIVEL())
@@ -128,18 +147,22 @@ public class JuegoTruco {
         else
             resultado = 0;
 
+        // ✅ Actualizar turno según quien ganó
         if (resultado == 1) {
-            System.out.println("Gana tirada J1");
+            System.out.println("✅ Gana tirada J1");
             rondasGanadasJ1++;
-            turnoActual = 1;
+            turnoActual = 1;  // ✅ J1 juega primero en la siguiente tirada
         } else if (resultado == 2) {
-            System.out.println("Gana tirada J2");
+            System.out.println("✅ Gana tirada J2");
             rondasGanadasJ2++;
-            turnoActual = 2;
+            turnoActual = 2;  // ✅ J2 juega primero en la siguiente tirada
         } else {
-            System.out.println("Parda en la tirada");
-            turnoActual = manoOriginal;
+            System.out.println("⚖️ Parda en la tirada");
+            turnoActual = manoOriginal;  // ✅ En parda, juega la mano
         }
+
+        System.out.println("Ronadas ganadas -> J1: " + rondasGanadasJ1 + " | J2: " + rondasGanadasJ2);
+        System.out.println("Turno para siguiente tirada: J" + turnoActual);
 
         int ganadorMano = verificarFinDeMano();
         if (ganadorMano != -1) {
@@ -155,7 +178,6 @@ public class JuegoTruco {
             System.out.println("Ganador de la mano: J" + ganadorMano);
             System.out.println("Puntos -> J1: " + puntosJ1 + " | J2: " + puntosJ2);
 
-            // 🆕 VERIFICAR VICTORIA
             if (hayGanador()) {
                 System.out.println("🏆 ¡HAY UN GANADOR! J" + getGanadorFinal());
             }
@@ -163,11 +185,12 @@ public class JuegoTruco {
             return ganadorMano;
         }
 
+        // ✅ Preparar siguiente tirada
         tiradaActual++;
         cartaJugadaJ1 = null;
         cartaJugadaJ2 = null;
 
-        System.out.println("Siguiente tirada: " + tiradaActual + ". Turno: J" + turnoActual);
+        System.out.println("➡️ Siguiente tirada: " + tiradaActual + ". Turno: J" + turnoActual);
         return resultado;
     }
 
@@ -186,23 +209,19 @@ public class JuegoTruco {
 
     public boolean cantar(int jugador, String canto) {
         if (manoTerminada) return false;
-
         if (jugador != turnoActual) {
             System.out.println("No es turno de J" + jugador);
             return false;
         }
-
         return gestorTruco.cantar(jugador, canto);
     }
 
     public boolean cantarEnvido(int jugador, String tipoEnvido) {
         if (manoTerminada) return false;
-
         if (tiradaActual > 1) {
             System.out.println("El envido solo se puede cantar en la primera tirada");
             return false;
         }
-
         if (envidoYaResuelto) {
             System.out.println("El envido ya fue resuelto en esta mano");
             return false;
@@ -229,13 +248,11 @@ public class JuegoTruco {
 
         if (resultado > 0) {
             manoTerminada = true;
-
             if (resultado == 1)
                 puntosJ1 += gestorTruco.getPuntos();
             else
                 puntosJ2 += gestorTruco.getPuntos();
 
-            // 🆕 VERIFICAR VICTORIA
             if (hayGanador()) {
                 System.out.println("🏆 ¡HAY UN GANADOR! J" + getGanadorFinal());
             }
@@ -248,7 +265,6 @@ public class JuegoTruco {
         int resultado = gestorEnvido.responder(jugador, quiero);
 
         if (resultado == 0) {
-            // Envido aceptado: se deben comparar los envidos
             int ganador = gestorEnvido.getJugadorQueCanto();
             int puntosEnvido = gestorEnvido.getPuntos();
 
@@ -263,13 +279,11 @@ public class JuegoTruco {
             gestorEnvido.reset();
             envidoYaResuelto = true;
 
-            // 🆕 VERIFICAR VICTORIA
             if (hayGanador()) {
                 System.out.println("🏆 ¡HAY UN GANADOR! J" + getGanadorFinal());
             }
 
         } else if (resultado > 0) {
-            // Envido rechazado (NO QUIERO)
             int puntosRechazo = gestorEnvido.getPuntosRechazo();
 
             if (resultado == 1) {
@@ -299,7 +313,6 @@ public class JuegoTruco {
         manoTerminada = true;
     }
 
-    // 🆕 MÉTODOS PARA AGREGAR PUNTOS DIRECTAMENTE
     public void agregarPuntosJ1(int puntos) {
         puntosJ1 += puntos;
     }

@@ -69,20 +69,27 @@ public class PantallaDosJugadores implements Screen, GameController {
     private static final float TIEMPO_MOSTRAR_VICTORIA = 3f;
 
     public PantallaDosJugadores(int puntosParaGanar, ServerThread server) {
-        this.server= server;
+        this.server = server;
         this.puntosParaGanar = puntosParaGanar;
+
+        juego = new JuegoTruco(puntosParaGanar, server);
+        jugador1 = juego.getJugador1();
+        jugador2 = juego.getJugador2();
+
+        System.out.println("🎮 PantallaDosJugadores creada - Juego inicializado");
     }
 
 
     @Override
     public void show() {
+        System.out.println("🎮 PantallaDosJugadores.show() llamado");
+
         fondo = new Imagen(Recursos.FONDODOSJUGADORES);
         fondo.dimensionarImg(Configuracion.ANCHO, Configuracion.ALTO);
         batch = Render.batch;
 
-        juego = new JuegoTruco(puntosParaGanar, server);
-        jugador1 = juego.getJugador1();
-        jugador2 = juego.getJugador2();
+        // ❌ NO crear juego aquí - ya se creó en el constructor
+        // juego = new JuegoTruco(puntosParaGanar, server);
 
         configurarPosicionesMesa();
         crearBotones();
@@ -529,17 +536,31 @@ public class PantallaDosJugadores implements Screen, GameController {
 
         fondo.dibujar();
 
-        for (CartaSolitario c : jugador1.getMano()) c.dibujar(batch);
-        for (CartaSolitario c : jugador2.getMano()) c.dibujar(batch);
+        // ✅✅✅ SERVIDOR: Solo dibujar las cartas que están en las MANOS de los jugadores ✅✅✅
+        // NO dibujar jugadasJ1 ni jugadasJ2 porque en el servidor no se actualizan bien
 
-        for (CartaSolitario c : jugadasJ1) c.dibujar(batch);
-        for (CartaSolitario c : jugadasJ2) c.dibujar(batch);
+        for (CartaSolitario c : jugador1.getMano()) {
+            c.dibujar(batch);
+        }
 
+        for (CartaSolitario c : jugador2.getMano()) {
+            c.dibujar(batch);
+        }
+
+        // ❌ NO dibujar las cartas jugadas en la mesa del servidor
+        // for (CartaSolitario c : jugadasJ1) c.dibujar(batch); ❌ COMENTAR ESTO
+        // for (CartaSolitario c : jugadasJ2) c.dibujar(batch); ❌ COMENTAR ESTO
+
+        // ✅ SOLO PUNTOS Y INFO
+        fuente.draw(batch, "SERVIDOR", Configuracion.ANCHO / 2f - 100, Configuracion.ALTO - 50);
         fuente.draw(batch, "J1: " + juego.getPuntosJ1() + " pts", 50, Configuracion.ALTO - 50);
         fuente.draw(batch, "J2: " + juego.getPuntosJ2() + " pts", 50, Configuracion.ALTO - 100);
-
+        fuente.draw(batch, "Turno: J" + juego.getTurnoActual(), 50, Configuracion.ALTO - 150);
+        fuente.draw(batch, "Tirada: " + juego.getTiradaActual() + "/3", 50, Configuracion.ALTO - 200);
+        fuente.draw(batch, "Mano: " + (juego.getJugador1().esMano() ? "J1" : "J2"), 50, Configuracion.ALTO - 250);
         fuente.draw(batch, "ESC para salir", 50, 650);
 
+        // ✅ Mensajes temporales
         if (!mensajeTemporal.isEmpty()) {
             com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
                 new com.badlogic.gdx.graphics.g2d.GlyphLayout(fuenteCanto, mensajeTemporal);
@@ -551,6 +572,7 @@ public class PantallaDosJugadores implements Screen, GameController {
                 Configuracion.ALTO / 2f + altoTexto / 2f);
         }
 
+        // ✅ Victoria
         if (juegoTerminado) {
             int ganador = juego.getGanadorFinal();
             String msgVictoria = "¡GANÓ JUGADOR " + ganador + "!";
@@ -569,15 +591,8 @@ public class PantallaDosJugadores implements Screen, GameController {
                 Configuracion.ALTO / 2f - 80);
         }
 
-        if (btnTruco != null) btnTruco.dibujar(batch);
-        if (btnRetruco != null) btnRetruco.dibujar(batch);
-        if (btnValeCuatro != null) btnValeCuatro.dibujar(batch);
-        if (btnEnvido != null) btnEnvido.dibujar(batch);
-        if (btnRealEnvido != null) btnRealEnvido.dibujar(batch);
-        if (btnFaltaEnvido != null) btnFaltaEnvido.dibujar(batch);
-        if (btnQuiero != null) btnQuiero.dibujar(batch);
-        if (btnNoQuiero != null) btnNoQuiero.dibujar(batch);
-        if (btnIrAlMazo != null) btnIrAlMazo.dibujar(batch); // 🆕
+
+
         batch.end();
     }
 
@@ -627,11 +642,165 @@ public class PantallaDosJugadores implements Screen, GameController {
 
     @Override
     public void startGame() {
+        System.out.println("🎮 startGame() llamado");
 
+        server.sendMessageToAll("Turno:" + juego.getTurnoActual());
     }
 
     @Override
     public void setearPuntosIniciales(int puntos) {
+        System.out.println("🎯 Seteando puntos iniciales: " + puntos);
+        this.puntosParaGanar = puntos;
 
+
+        juego = new JuegoTruco(puntos, server);
+        jugador1 = juego.getJugador1();
+        jugador2 = juego.getJugador2();
+
+
+        server.sendMessageToAll("Iniciar_Partida:" + puntos);
+        server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+    }
+
+    @Override
+    public void procesarJugada(int jugador, int idCarta) {
+        System.out.println("\n🎮 ========== SERVIDOR PROCESA JUGADA ==========");
+        System.out.println("   Jugador: J" + jugador);
+        System.out.println("   Carta ID: " + idCarta);
+        System.out.println("   Turno actual: J" + juego.getTurnoActual());
+        System.out.println("   Tirada actual: " + juego.getTiradaActual());
+
+        // ✅ Validar que sea el turno correcto
+        if (!juego.puedeJugar(jugador)) {
+            System.out.println("❌ RECHAZADO: No es el turno del jugador " + jugador);
+            return;
+        }
+
+        // ✅ Buscar la carta en la mano del jugador
+        JugadorBase jugadorActual = (jugador == 1) ? jugador1 : jugador2;
+        CartaSolitario cartaAJugar = null;
+
+        for (CartaSolitario c : jugadorActual.getMano()) {
+            if (c.getId() == idCarta) {
+                cartaAJugar = c;
+                break;
+            }
+        }
+
+        if (cartaAJugar == null) {
+            System.out.println("❌ RECHAZADO: Carta no encontrada");
+            return;
+        }
+
+        if (cartaAJugar.getYaJugadas()) {
+            System.out.println("❌ RECHAZADO: Carta ya fue jugada");
+            return;
+        }
+
+        System.out.println("✅ VALIDACIÓN EXITOSA");
+
+        // ✅ Enviar a AMBOS clientes que la carta fue jugada
+        server.sendMessageToAll("CartaJugada:" + jugador + ":" + idCarta);
+        System.out.println("📤 Enviado a clientes: CartaJugada:" + jugador + ":" + idCarta);
+
+        // ✅ Procesar la jugada en el servidor (SOLO LÓGICA)
+        boolean jugadaExitosa = juego.jugarCarta(jugador, cartaAJugar);
+
+        if (jugadaExitosa) {
+            System.out.println("✅ Jugada procesada en JuegoTruco");
+
+            // ❌ NO mover cartas visualmente en el servidor
+            // Las listas jugadasJ1 y jugadasJ2 NO se usan en el servidor
+            // Solo se usan para CONTAR cuántas cartas se jugaron
+
+            // ✅ Contar cartas jugadas (sin moverlas visualmente)
+            int cartasJugadasJ1 = 0;
+            int cartasJugadasJ2 = 0;
+
+            for (CartaSolitario c : jugador1.getMano()) {
+                if (c.getYaJugadas()) cartasJugadasJ1++;
+            }
+
+            for (CartaSolitario c : jugador2.getMano()) {
+                if (c.getYaJugadas()) cartasJugadasJ2++;
+            }
+
+            System.out.println("   Cartas jugadas J1: " + cartasJugadasJ1);
+            System.out.println("   Cartas jugadas J2: " + cartasJugadasJ2);
+
+            // ✅ Si ambos jugaron, procesar tirada
+            if (cartasJugadasJ1 == cartasJugadasJ2 &&
+                cartasJugadasJ1 == juego.getTiradaActual()) {
+
+                System.out.println("\n🎲 Ambos jugaron - Procesando tirada " + juego.getTiradaActual());
+
+                int resultadoTirada = juego.procesarTirada();
+                System.out.println("📊 Resultado de tirada: " + resultadoTirada);
+
+                // ✅ Enviar puntos actualizados
+                server.sendMessageToAll("Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+                System.out.println("📤 Enviado: Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+
+                // ✅ Verificar si la mano terminó
+                if (juego.isManoTerminada()) {
+                    System.out.println("🏁 Mano terminada");
+
+                    if (juego.hayGanador()) {
+                        int ganador = juego.getGanadorFinal();
+                        System.out.println("🏆 ¡GANADOR: J" + ganador + "!");
+                        server.sendMessageToAll("Victoria:" + ganador);
+                    } else {
+                        System.out.println("🔄 Iniciando nueva mano");
+
+                        server.sendMessageToAll("NuevaMano");
+                        System.out.println("📤 Enviado: NuevaMano");
+
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        juego.reiniciarManoSiCorresponde();
+                        jugador1 = juego.getJugador1();
+                        jugador2 = juego.getJugador2();
+
+                        server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+                        System.out.println("📤 Enviado: Turno:" + juego.getTurnoActual());
+                    }
+                } else {
+                    System.out.println("➡️ Continúa la mano - Tirada " + juego.getTiradaActual());
+
+                    int nuevoTurno = juego.getTurnoActual();
+                    server.sendMessageToAll("Turno:" + nuevoTurno);
+                    System.out.println("📤 Enviado: Turno:" + nuevoTurno);
+                }
+            } else {
+                // Solo un jugador jugó
+                int nuevoTurno = juego.getTurnoActual();
+                server.sendMessageToAll("Turno:" + nuevoTurno);
+                System.out.println("📤 Enviado: Turno:" + nuevoTurno);
+            }
+        }
+
+        System.out.println("========================================\n");
+    }
+
+
+    private void repartirCartasAClientes() {
+        System.out.println("🎴 Repartiendo nuevas cartas a los clientes");
+
+        // Enviar cartas del Jugador 1
+        for (CartaSolitario carta : jugador1.getMano()) {
+            server.sendMessageToAll("Repartir:1:" + carta.getId());
+        }
+
+        // Enviar cartas del Jugador 2
+        for (CartaSolitario carta : jugador2.getMano()) {
+            server.sendMessageToAll("Repartir:2:" + carta.getId());
+        }
+
+        // Enviar turno inicial
+        server.sendMessageToAll("Turno:" + juego.getTurnoActual());
     }
 }

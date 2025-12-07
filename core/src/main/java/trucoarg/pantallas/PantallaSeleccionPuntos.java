@@ -170,7 +170,25 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
 
     @Override
     public void setearPuntosIniciales(int puntos) {
-     iniciarJuego(puntos);
-     server.sendMessageToAll("Iniciar_Partida:"+puntos);
+        System.out.println("🎯 Seteando puntos iniciales: " + puntos);
+
+        // ✅ Crear la pantalla del juego
+        PantallaDosJugadores pantallaJuego = new PantallaDosJugadores(puntos, server);
+
+        // ✅✅✅ CRÍTICO: Actualizar el gameController del servidor ✅✅✅
+        server.gameController = pantallaJuego;
+        System.out.println("✅ GameController actualizado a PantallaDosJugadores");
+
+        // ✅ Enviar mensaje a los clientes
+        server.sendMessageToAll("Iniciar_Partida:" + puntos);
+
+        // ✅ Cambiar la pantalla
+        dispose();
+        Render.app.setScreen(pantallaJuego);
+    }
+
+    @Override
+    public void procesarJugada(int jugador, int idCarta) {
+
     }
 }

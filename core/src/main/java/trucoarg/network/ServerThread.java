@@ -1,6 +1,5 @@
 package trucoarg.network;
 
-
 import com.badlogic.gdx.Gdx;
 import trucoarg.pantallas.PantallaDosJugadores;
 import trucoarg.pantallas.PantallaSeleccionPuntos;
@@ -17,15 +16,14 @@ public class ServerThread extends Thread {
     private final int MAX_CLIENTS = 2;
     private int connectedClients = 0;
     private ArrayList<Client> clients = new ArrayList<Client>();
-    private GameController gameController;
-
+    public GameController gameController;
 
     public ServerThread(GameController gameController) {
         this.gameController = gameController;
         try {
             socket = new DatagramSocket(serverPort);
         } catch (SocketException e) {
-//            throw new RuntimeException(e);
+            System.err.println("❌ Error creando socket del servidor: " + e.getMessage());
         }
     }
 
@@ -37,7 +35,9 @@ public class ServerThread extends Thread {
                 socket.receive(packet);
                 processMessage(packet);
             } catch (IOException e) {
-//                throw new RuntimeException(e);
+                if (!end) {
+                    System.err.println("❌ Error recibiendo paquete: " + e.getMessage());
+                }
             }
         } while(!end);
     }
@@ -46,12 +46,11 @@ public class ServerThread extends Thread {
         String message = (new String(packet.getData())).trim();
         String[] parts = message.split(":");
         int index = findClientIndex(packet);
-        System.out.println("Mensaje recibido " + message);
+        System.out.println("📨 Mensaje recibido: " + message);
 
         if(parts[0].equals("Connect")){
-
             if(index != -1) {
-                System.out.println("Client already connected");
+                System.out.println("⚠️ Cliente ya conectado");
                 this.sendMessage("AlreadyConnected", packet.getAddress(), packet.getPort());
                 return;
             }
@@ -61,31 +60,48 @@ public class ServerThread extends Thread {
                 Client newClient = new Client(connectedClients, packet.getAddress(), packet.getPort());
                 clients.add(newClient);
                 sendMessage("Connected:"+connectedClients, packet.getAddress(), packet.getPort());
+                System.out.println("✅ Cliente " + connectedClients + " conectado");
 
                 if(connectedClients == MAX_CLIENTS) {
+                    System.out.println("🎮 Ambos clientes conectados - Enviando señal Start");
                     for(Client client : clients) {
                         sendMessage("Start", client.getIp(), client.getPort());
-                        gameController.startGame();
                     }
+                    gameController.startGame();
                 }
 
             } else {
+                System.out.println("❌ Servidor lleno");
                 sendMessage("Full", packet.getAddress(), packet.getPort());
             }
-        } else if(index==-1){
-            System.out.println("Client not connected");
+        } else if(index == -1){
+            System.out.println("❌ Cliente no conectado");
             this.sendMessage("NotConnected", packet.getAddress(), packet.getPort());
             return;
         } else {
             Client client = clients.get(index);
             switch(parts[0]){
-//                case "Move":
-//                    gameController.move(client.getNum(), Integer.parseInt(parts[1]));
-//                    break;
-                case("Setearpuntos"):
-                    int puntos= Integer.parseInt(parts[1]);
+                case "Setearpuntos":
+                    int puntos = Integer.parseInt(parts[1]);
+                    System.out.println("🎯 Cliente solicita iniciar partida a " + puntos + " puntos");
                     Gdx.app.postRunnable(() -> gameController.setearPuntosIniciales(puntos));
-                break;
+                    break;
+
+                case "JugarCarta":
+                    int jugador = Integer.parseInt(parts[1]);
+                    int idCarta = Integer.parseInt(parts[2]);
+
+                    System.out.println("🎴 Servidor recibe: J" + jugador + " juega carta " + idCarta);
+
+                    Gdx.app.postRunnable(() -> {
+                        System.out.println("🔄 Ejecutando procesarJugada");
+                        gameController.procesarJugada(jugador, idCarta);
+                    });
+                    break;
+
+                default:
+                    System.out.println("⚠️ Mensaje desconocido: " + parts[0]);
+                    break;
             }
         }
     }
@@ -100,7 +116,6 @@ public class ServerThread extends Thread {
                 clientIndex = i;
             }
             i++;
-
         }
         return clientIndex;
     }
@@ -111,7 +126,7 @@ public class ServerThread extends Thread {
         try {
             socket.send(packet);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("❌ Error enviando mensaje: " + e.getMessage());
         }
     }
 
