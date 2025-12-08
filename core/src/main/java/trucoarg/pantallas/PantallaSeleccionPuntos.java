@@ -161,7 +161,6 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
     @Override
     public void dispose() {
         if (fondo != null) fondo.dispose();
-        server.terminate();
     }
 
     @Override
