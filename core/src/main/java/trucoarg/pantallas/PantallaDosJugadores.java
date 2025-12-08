@@ -587,6 +587,14 @@ public class PantallaDosJugadores implements Screen, GameController {
         return sb.toString();
     }
 
+    public void cerrarServidor() {
+        if (server!= null) {
+            System.out.println("Cerrando Servidor");
+            server.disconnectClients();
+            server.terminate();
+        }
+    }
+
 
     @Override public void resize(int width, int height) {}
     @Override public void pause() {}
@@ -607,7 +615,7 @@ public class PantallaDosJugadores implements Screen, GameController {
         fuente.dispose();
         if (fuenteVictoria != null) fuenteVictoria.dispose();
         if (fuenteCanto != null) fuenteCanto.dispose();
-        server.terminate();
+        cerrarServidor();
     }
 
     @Override

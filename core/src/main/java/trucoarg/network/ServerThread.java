@@ -169,6 +169,7 @@ public class ServerThread extends Thread {
                         pantalla.enviarEstadoBotones(jugadorSolicitante);
                     });
                     break;
+
                 default:
                     System.out.println("⚠️ Mensaje desconocido: " + parts[0]);
                     break;
@@ -207,6 +208,7 @@ public class ServerThread extends Thread {
             System.out.println("❌ Canto de envido rechazado por lógica del juego");
         }
     }
+
 
     private void procesarRespuestaCanto(int jugador, boolean quiero) {
         System.out.println("💬 Procesando respuesta: J" + jugador + " - " + (quiero ? "QUIERO" : "NO QUIERO"));
