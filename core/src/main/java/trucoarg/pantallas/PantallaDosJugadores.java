@@ -115,6 +115,7 @@ public class PantallaDosJugadores implements Screen, GameController {
             jugador2.getMano(),
             this
         ));
+
     }
 
     private void crearBotones() {
@@ -320,134 +321,7 @@ public class PantallaDosJugadores implements Screen, GameController {
     public void procesarClickBoton(Boton boton) {
         if (juegoTerminado) return;
 
-        if (boton == btnIrAlMazo) {
-            int turnoActual = juego.getTurnoActual();
-            mostrarMensajeTemporal("¡Jugador " + turnoActual + " se va al mazo!");
-
-            juego.terminarManoAlMazo();
-
-            int ganador = (turnoActual == 1) ? 2 : 1;
-            int puntosTruco = juego.getGestorTruco().getPuntos();
-
-            if (ganador == 1) {
-                juego.agregarPuntosJ1(puntosTruco);
-            } else {
-                juego.agregarPuntosJ2(puntosTruco);
-            }
-
-            verificarVictoria();
-            if (juegoTerminado) return;
-
-            juego.reiniciarManoSiCorresponde();
-            jugador1 = juego.getJugador1();
-            jugador2 = juego.getJugador2();
-
-            jugadasJ1.clear();
-            jugadasJ2.clear();
-
-            posicionarCartasJugadorAbajo(jugador1.getMano());
-            posicionarCartasJugadorArriba(jugador2.getMano());
-
-            actualizarInputProcessor();
-
-            actualizarEstadoBotones();
-            return;
-        }
-
-        // PROCESAR RESPUESTA A CANTOS (QUIERO / NO QUIERO)
-        if (boton == btnQuiero || boton == btnNoQuiero) {
-            if (!juego.hayCantoPendiente()) {
-                return;
-            }
-
-            int jugadorResponde = juego.getJugadorQueDebeResponder();
-            boolean quiero = (boton == btnQuiero);
-
-            int resultado = -1;
-
-            if (tipoCantoPendiente != null && tipoCantoPendiente.equals("truco")) {
-                resultado = juego.responderCanto(jugadorResponde, quiero);
-
-                if (resultado > 0) {
-                    // NO QUIERO - Alguien ganó la mano
-                    verificarVictoria();
-                    if (juegoTerminado) return;
-                    reiniciarManoVisual();
-                } else if (resultado == 0) {
-                    // QUIERO - Se acepta el truco y continúa el juego
-                    mostrarMensajeTemporal("¡QUIERO!");
-                    // 🆕 CRÍTICO: Actualizar botones para que aparezca RETRUCO
-                    actualizarEstadoBotones();
-                }
-
-            } else if (tipoCantoPendiente != null && tipoCantoPendiente.equals("envido")) {
-                resultado = juego.responderEnvido(jugadorResponde, quiero);
-
-                verificarVictoria();
-                if (juegoTerminado) return;
-
-                if (resultado == 0) {
-                    mostrarMensajeTemporal("¡QUIERO ENVIDO!");
-                }
-                // 🆕 CRÍTICO: Actualizar botones después de resolver envido
-                actualizarEstadoBotones();
-            }
-
-            // 🆕 SIEMPRE actualizar botones después de procesar respuesta
-            actualizarEstadoBotones();
-            return;
-        }
-
-        // PROCESAR CANTOS DE TRUCO
-        int turno = juego.getTurnoActual();
-        String tipoCanto = null;
-
-        if (boton == btnTruco) {
-            tipoCanto = "truco";
-        } else if (boton == btnRetruco) {
-            tipoCanto = "retruco";
-        } else if (boton == btnValeCuatro) {
-            tipoCanto = "vale cuatro";
-        }
-
-        if (tipoCanto != null) {
-            if (juego.cantar(turno, tipoCanto)) {
-                mostrarMensajeTemporal("¡" + tipoCanto.toUpperCase() + "!");
-                actualizarEstadoBotones();
-            } else {
-                mostrarMensajeTemporal("No puedes cantar " + tipoCanto.toUpperCase() + " ahora");
-            }
-            return;
-        }
-
-        // PROCESAR CANTOS DE ENVIDO
-        String tipoEnvido = null;
-
-        if (boton == btnEnvido) {
-            tipoEnvido = "envido";
-        } else if (boton == btnRealEnvido) {
-            tipoEnvido = "real envido";
-        } else if (boton == btnFaltaEnvido) {
-            tipoEnvido = "falta envido";
-        }
-
-        if (tipoEnvido != null) {
-            int jugadorQueCanta;
-
-            if (juego.getGestorEnvido().estaEsperandoRespuesta()) {
-                jugadorQueCanta = juego.getJugadorQueDebeResponder();
-            } else {
-                jugadorQueCanta = juego.getTurnoActual();
-            }
-
-            if (juego.cantarEnvido(jugadorQueCanta, tipoEnvido)) {
-                mostrarMensajeTemporal("¡" + tipoEnvido.toUpperCase() + "!");
-                actualizarEstadoBotones();
-            } else {
-                mostrarMensajeTemporal("No puedes cantar " + tipoEnvido.toUpperCase() + " ahora");
-            }
-            return;
-        }
+        System.out.println("⚠️ Servidor no debe usar botones directamente");
     }
 
     private void reiniciarManoVisual() {
@@ -619,6 +493,101 @@ public class PantallaDosJugadores implements Screen, GameController {
         ));
     }
 
+    public void enviarEstadoBotonesATodos() {
+        enviarEstadoBotones(1);
+        enviarEstadoBotones(2);
+    }
+
+    // Cambiar de private a public
+    public void enviarEstadoBotones(int jugador) {
+        String botones = calcularBotonesVisibles(jugador);
+
+        for (trucoarg.network.Client client : server.getClients()) {
+            if (client.getNum() == jugador) {
+                server.sendMessage("ActualizarBotones:" + botones, client.getIp(), client.getPort());
+                System.out.println("📤 Enviado a J" + jugador + ": ActualizarBotones:" + botones);
+                break;
+            }
+        }
+    }
+
+    private String calcularBotonesVisibles(int jugador) {
+        if (juegoTerminado) {
+            return "ninguno";
+        }
+
+        // ========== SI HAY TRUCO PENDIENTE ==========
+        // ✅ PRIORIDAD 1: Si hay truco pendiente, SOLO mostrar respuestas
+        if (juego.getGestorTruco().estaEsperandoRespuesta()) {
+            int jugadorQueDebeResponder = juego.getJugadorQueDebeResponder();
+
+            if (jugador == jugadorQueDebeResponder) {
+                return "quiero,noquiero";
+            } else {
+                return "ninguno"; // El otro jugador espera
+            }
+        }
+
+        // ========== SI HAY ENVIDO PENDIENTE ==========
+        // ✅ PRIORIDAD 2: Si hay envido pendiente, SOLO mostrar respuestas o subir
+        if (juego.getGestorEnvido().estaEsperandoRespuesta()) {
+            int jugadorQueDebeResponder = juego.getJugadorQueDebeResponder();
+
+            if (jugador == jugadorQueDebeResponder) {
+                StringBuilder sb = new StringBuilder("quiero,noquiero");
+
+                // Puede subir el envido
+                if (juego.getGestorEnvido().puedeSubirConEnvido()) {
+                    sb.append(",envido");
+                }
+                if (juego.getGestorEnvido().puedeSubirConRealEnvido()) {
+                    sb.append(",real");
+                }
+                if (juego.getGestorEnvido().puedeSubirConFaltaEnvido()) {
+                    sb.append(",falta");
+                }
+
+                return sb.toString();
+            } else {
+                return "ninguno"; // El otro jugador espera
+            }
+        }
+
+        // ========== TURNO NORMAL (sin cantos pendientes) ==========
+
+        int turnoActual = juego.getTurnoActual();
+
+        // ✅ Si NO hay cantos pendientes, validar turno
+        if (turnoActual != jugador) {
+            return "ninguno";
+        }
+
+        boolean manoTerminada = juego.isManoTerminada();
+        if (manoTerminada) {
+            return "ninguno";
+        }
+
+        int tiradaActual = juego.getTiradaActual();
+        StringBuilder sb = new StringBuilder();
+
+        // Siempre puede ir al mazo
+        sb.append("mazo");
+
+        // Botones de TRUCO
+        sb.append(",truco");
+        if (juego.getGestorTruco().isCantoAceptado()) {
+            sb.append(",retruco,vale4");
+        }
+
+        // Botones de ENVIDO (solo en primera tirada y si no está resuelto)
+        if (tiradaActual == 1 && !juego.isEnvidoYaResuelto()) {
+            sb.append(",envido,real,falta");
+        }
+
+        return sb.toString();
+    }
+
+
     @Override public void resize(int width, int height) {}
     @Override public void pause() {}
     @Override public void resume() {}
@@ -643,8 +612,10 @@ public class PantallaDosJugadores implements Screen, GameController {
     @Override
     public void startGame() {
         System.out.println("🎮 startGame() llamado");
-
         server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+
+        // 🆕 Enviar estado de botones
+        enviarEstadoBotonesATodos();
     }
 
     @Override
@@ -652,14 +623,15 @@ public class PantallaDosJugadores implements Screen, GameController {
         System.out.println("🎯 Seteando puntos iniciales: " + puntos);
         this.puntosParaGanar = puntos;
 
-
         juego = new JuegoTruco(puntos, server);
         jugador1 = juego.getJugador1();
         jugador2 = juego.getJugador2();
 
-
         server.sendMessageToAll("Iniciar_Partida:" + puntos);
         server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+
+        // 🆕 Enviar estado de botones
+        enviarEstadoBotonesATodos();
     }
 
     @Override
@@ -784,23 +756,210 @@ public class PantallaDosJugadores implements Screen, GameController {
         }
 
         System.out.println("========================================\n");
+        enviarEstadoBotonesATodos();
+
     }
 
 
-    private void repartirCartasAClientes() {
-        System.out.println("🎴 Repartiendo nuevas cartas a los clientes");
+    @Override
+    public boolean cantarTruco(int jugador, String tipoCanto) {
+        if (juegoTerminado) return false;
 
-        // Enviar cartas del Jugador 1
-        for (CartaSolitario carta : jugador1.getMano()) {
-            server.sendMessageToAll("Repartir:1:" + carta.getId());
+        boolean exito = juego.cantar(jugador, tipoCanto);
+
+        if (exito) {
+            mostrarMensajeTemporal("J" + jugador + " canta " + tipoCanto.toUpperCase());
+
         }
 
-        // Enviar cartas del Jugador 2
-        for (CartaSolitario carta : jugador2.getMano()) {
-            server.sendMessageToAll("Repartir:2:" + carta.getId());
+        return exito;
+    }
+
+    @Override
+    public boolean cantarEnvido(int jugador, String tipoEnvido) {
+        if (juegoTerminado) return false;
+
+        boolean exito = juego.cantarEnvido(jugador, tipoEnvido);
+
+        if (exito) {
+            mostrarMensajeTemporal("J" + jugador + " canta " + tipoEnvido.toUpperCase());
+
         }
 
-        // Enviar turno inicial
+        return exito;
+    }
+
+    @Override
+    public int responderCanto(int jugador, boolean quiero) {
+        System.out.println("\n💬 ========== PROCESANDO RESPUESTA A CANTO ==========");
+        System.out.println("   Jugador: J" + jugador);
+        System.out.println("   Respuesta: " + (quiero ? "QUIERO" : "NO QUIERO"));
+
+        int resultado = -1;
+
+        // Determinar si es truco o envido
+        if (juego.getGestorTruco().estaEsperandoRespuesta()) {
+            System.out.println("   Tipo: TRUCO");
+            resultado = juego.responderCanto(jugador, quiero);
+
+            if (resultado > 0) {
+                // ✅ NO QUIERO - Alguien ganó la mano
+                System.out.println("   ❌ NO QUIERO - Ganador: J" + resultado);
+                mostrarMensajeTemporal("J" + jugador + " dice NO QUIERO");
+
+                // ✅ Enviar puntos actualizados
+                server.sendMessageToAll("Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+
+                verificarVictoria();
+                if (juegoTerminado) {
+                    int ganadorFinal = juego.getGanadorFinal();
+                    server.sendMessageToAll("Victoria:" + ganadorFinal);
+                    return resultado;
+                }
+
+                // ✅ Nueva mano
+                server.sendMessageToAll("NuevaMano");
+
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // 🆕✅ Reiniciar y repartir nuevas cartas
+                juego.reiniciarManoSiCorresponde();
+                jugador1 = juego.getJugador1();
+                jugador2 = juego.getJugador2();
+
+
+                server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+
+                jugadasJ1.clear();
+                jugadasJ2.clear();
+                posicionarCartasJugadorAbajo(jugador1.getMano());
+                posicionarCartasJugadorArriba(jugador2.getMano());
+                actualizarInputProcessor();
+
+            } else if (resultado == 0) {
+                // ✅ QUIERO - Continúa el juego
+                System.out.println("   ✅ QUIERO - Continúa el juego");
+                mostrarMensajeTemporal("J" + jugador + " dice QUIERO");
+            }
+
+        } else if (juego.getGestorEnvido().estaEsperandoRespuesta()) {
+            System.out.println("   Tipo: ENVIDO");
+            resultado = juego.responderEnvido(jugador, quiero);
+
+            // ✅ Enviar puntos actualizados
+            server.sendMessageToAll("Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+
+            if (resultado > 0) {
+                // ✅ NO QUIERO
+                System.out.println("   ❌ NO QUIERO - Ganador: J" + resultado);
+                mostrarMensajeTemporal("J" + jugador + " dice NO QUIERO");
+            } else if (resultado == 0) {
+                // ✅ QUIERO
+                System.out.println("   ✅ QUIERO ENVIDO");
+                mostrarMensajeTemporal("J" + jugador + " dice QUIERO ENVIDO");
+            }
+
+            verificarVictoria();
+            if (juegoTerminado) {
+                int ganadorFinal = juego.getGanadorFinal();
+                server.sendMessageToAll("Victoria:" + ganadorFinal);
+                return resultado;
+            }
+        }
+
+        enviarEstadoBotonesATodos();
+        System.out.println("   Resultado: " + resultado);
+        System.out.println("===================================================\n");
+
+        return resultado;
+    }
+
+    @Override
+    public void irAlMazo(int jugador) {
+        System.out.println("\n🃏 ========== PROCESANDO IR AL MAZO ==========");
+        System.out.println("   Jugador: J" + jugador);
+
+        mostrarMensajeTemporal("¡Jugador " + jugador + " se va al mazo!");
+
+        // ✅ Terminar la mano
+        juego.terminarManoAlMazo();
+
+        // ✅ Calcular ganador y puntos
+        int ganador = (jugador == 1) ? 2 : 1;
+        int puntosTruco = juego.getGestorTruco().getPuntos();
+
+        System.out.println("   Ganador: J" + ganador);
+        System.out.println("   Puntos de truco: " + puntosTruco);
+
+        // ✅ Agregar puntos
+        if (ganador == 1) {
+            juego.agregarPuntosJ1(puntosTruco);
+        } else {
+            juego.agregarPuntosJ2(puntosTruco);
+        }
+
+        // ✅ Enviar puntos actualizados a los clientes
+        server.sendMessageToAll("Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+        System.out.println("📤 Enviado: Puntos:" + juego.getPuntosJ1() + ":" + juego.getPuntosJ2());
+
+        // ✅ Verificar si hay victoria
+        verificarVictoria();
+        if (juegoTerminado) {
+            int ganadorFinal = juego.getGanadorFinal();
+            server.sendMessageToAll("Victoria:" + ganadorFinal);
+            System.out.println("📤 Enviado: Victoria:" + ganadorFinal);
+            return;
+        }
+
+        // ✅ Si no hay victoria, iniciar nueva mano
+        System.out.println("🔄 Iniciando nueva mano después de ir al mazo");
+
+        // ✅ Limpiar la mesa en los clientes
+        server.sendMessageToAll("NuevaMano");
+        System.out.println("📤 Enviado: NuevaMano");
+
+        try {
+            Thread.sleep(200); // Esperar a que los clientes limpien
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // ✅ Reiniciar la mano en el servidor
+        // ⚡ ESTO YA ENVÍA LAS CARTAS automáticamente en el constructor de JugadorBase
+        juego.reiniciarManoSiCorresponde();
+        jugador1 = juego.getJugador1();
+        jugador2 = juego.getJugador2();
+
+        // ❌ ELIMINAR ESTA LÍNEA - Las cartas ya se enviaron automáticamente
+        // repartirCartasAClientes(); // ❌ DUPLICADO
+
+        // ✅ Enviar turno
         server.sendMessageToAll("Turno:" + juego.getTurnoActual());
+        System.out.println("📤 Enviado: Turno:" + juego.getTurnoActual());
+
+        // ✅ Actualizar estado visual del servidor
+        jugadasJ1.clear();
+        jugadasJ2.clear();
+        posicionarCartasJugadorAbajo(jugador1.getMano());
+        posicionarCartasJugadorArriba(jugador2.getMano());
+        actualizarInputProcessor();
+        enviarEstadoBotonesATodos();
+
+        System.out.println("✅ Nueva mano iniciada correctamente");
+        System.out.println("=======================================\n");
+    }
+
+    @Override
+    public int getPuntosJ1() {
+        return juego.getPuntosJ1();
+    }
+
+    @Override
+    public int getPuntosJ2() {
+        return juego.getPuntosJ2();
     }
 }

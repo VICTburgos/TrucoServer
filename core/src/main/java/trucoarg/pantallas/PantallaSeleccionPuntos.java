@@ -191,4 +191,34 @@ public class PantallaSeleccionPuntos implements Screen, GameController {
     public void procesarJugada(int jugador, int idCarta) {
 
     }
+
+    @Override
+    public boolean cantarTruco(int jugador, String tipoCanto) {
+        return false;
+    }
+
+    @Override
+    public boolean cantarEnvido(int jugador, String tipoEnvido) {
+        return false;
+    }
+
+    @Override
+    public int responderCanto(int jugador, boolean quiero) {
+        return 0;
+    }
+
+    @Override
+    public void irAlMazo(int jugador) {
+
+    }
+
+    @Override
+    public int getPuntosJ1() {
+        return 0;
+    }
+
+    @Override
+    public int getPuntosJ2() {
+        return 0;
+    }
 }
