@@ -195,7 +195,6 @@ public class JuegoTruco {
             return ganadorMano;
         }
 
-        // ✅ La mano continúa - preparar siguiente tirada
         tiradaActual++;
         cartaJugadaJ1 = null;
         cartaJugadaJ2 = null;
@@ -205,13 +204,12 @@ public class JuegoTruco {
     }
 
     private int verificarFinDeMano() {
-        System.out.println("🔍 verificarFinDeMano() - Tirada actual: " + tiradaActual);
+        System.out.println(" verificarFinDeMano() - Tirada actual: " + tiradaActual);
         System.out.println("   Rondas ganadas -> J1: " + rondasGanadasJ1 + " | J2: " + rondasGanadasJ2);
         System.out.println("   Tirada 1: " + (tirada1Ganador == 0 ? "PARDA" : tirada1Ganador == -1 ? "No jugada" : "J" + tirada1Ganador));
         System.out.println("   Tirada 2: " + (tirada2Ganador == 0 ? "PARDA" : tirada2Ganador == -1 ? "No jugada" : "J" + tirada2Ganador));
         System.out.println("   Tirada 3: " + (tirada3Ganador == 0 ? "PARDA" : tirada3Ganador == -1 ? "No jugada" : "J" + tirada3Ganador));
 
-        // ✅ CASO 1: Alguien ganó 2 tiradas → Gana la mano inmediatamente
         if (rondasGanadasJ1 == 2) {
             System.out.println("🏆 J1 ganó 2 tiradas - GANA LA MANO");
             return 1;
@@ -221,32 +219,25 @@ public class JuegoTruco {
             return 2;
         }
 
-        // ✅ CASO 2: Después de la tirada 2, verificar si ya hay ganador por pardas
         if (tiradaActual == 2) {
-            // Escenario: J1 ganó 1ra, PARDA en 2da → J1 ya ganó (1-0 con parda)
             if (rondasGanadasJ1 == 1 && rondasGanadasJ2 == 0) {
                 System.out.println("🏆 J1 ganó 1 tirada sin respuesta - GANA LA MANO");
                 return 1;
             }
-            // Escenario: J2 ganó 2da, PARDA en 1ra → J2 ya ganó (0-1 con parda)
             if (rondasGanadasJ2 == 1 && rondasGanadasJ1 == 0) {
                 System.out.println("🏆 J2 ganó 1 tirada sin respuesta - GANA LA MANO");
                 return 2;
             }
 
-            // Escenario: 2 PARDAS seguidas (parda-parda) → Gana la MANO
             if (tirada1Ganador == 0 && tirada2Ganador == 0) {
                 System.out.println("⚖️⚖️ DOS PARDAS - Gana la MANO (J" + manoOriginal + ")");
                 return manoOriginal;
             }
 
-            // Si están 1-1, continuar a la 3ra tirada
             return -1;
         }
 
-        // ✅ CASO 3: Después de la tirada 3, aplicar reglas de desempate
         if (tiradaActual == 3) {
-            // Si alguien tiene más tiradas ganadas → gana directamente
             if (rondasGanadasJ1 > rondasGanadasJ2) {
                 System.out.println("🏆 J1 ganó más tiradas (" + rondasGanadasJ1 + " vs " + rondasGanadasJ2 + ")");
                 return 1;
@@ -256,66 +247,54 @@ public class JuegoTruco {
                 return 2;
             }
 
-            // Empate en tiradas ganadas (1-1 con parda o 0-0 con pardas)
-            // Aplicar reglas de desempate
 
-            // ✅ PARDA EN TERCERA → Gana quien ganó la primera
+
             if (tirada3Ganador == 0) {
                 System.out.println("⚖️ PARDA en tirada 3");
                 if (tirada1Ganador > 0) {
                     System.out.println("→ Gana J" + tirada1Ganador + " (ganador de la 1ra)");
                     return tirada1Ganador;
                 }
-                // Si 1ra fue parda, verificar 2da
                 if (tirada2Ganador > 0) {
                     System.out.println("→ Gana J" + tirada2Ganador + " (ganador de la 2da)");
                     return tirada2Ganador;
                 }
-                // Si 1ra y 2da fueron pardas también → 3 pardas
                 System.out.println("⚖️⚖️⚖️ TRES PARDAS - Gana la MANO (J" + manoOriginal + ")");
                 return manoOriginal;
             }
 
-            // ✅ PARDA EN SEGUNDA → Gana quien ganó la primera
             if (tirada2Ganador == 0) {
                 System.out.println("⚖️ PARDA en tirada 2");
                 if (tirada1Ganador > 0) {
                     System.out.println("→ Gana J" + tirada1Ganador + " (ganador de la 1ra)");
                     return tirada1Ganador;
                 }
-                // Si 1ra también fue parda, gana quien ganó la 3ra
                 if (tirada3Ganador > 0) {
                     System.out.println("→ Gana J" + tirada3Ganador + " (ganador de la 3ra)");
                     return tirada3Ganador;
                 }
-                // 3 pardas
                 System.out.println("⚖️⚖️⚖️ TRES PARDAS - Gana la MANO (J" + manoOriginal + ")");
                 return manoOriginal;
             }
 
-            // ✅ PARDA EN PRIMERA → Gana quien ganó la segunda
             if (tirada1Ganador == 0) {
                 System.out.println("⚖️ PARDA en tirada 1");
                 if (tirada2Ganador > 0) {
                     System.out.println("→ Gana J" + tirada2Ganador + " (ganador de la 2da)");
                     return tirada2Ganador;
                 }
-                // Si 2da también fue parda, gana quien ganó la 3ra
                 if (tirada3Ganador > 0) {
                     System.out.println("→ Gana J" + tirada3Ganador + " (ganador de la 3ra)");
                     return tirada3Ganador;
                 }
-                // 3 pardas
                 System.out.println("⚖️⚖️⚖️ TRES PARDAS - Gana la MANO (J" + manoOriginal + ")");
                 return manoOriginal;
             }
 
-            // No debería llegar aquí
             System.out.println("⚠️ Caso no contemplado, gana la MANO (J" + manoOriginal + ")");
             return manoOriginal;
         }
 
-        // La mano aún no terminó
         return -1;
     }
 
@@ -323,14 +302,12 @@ public class JuegoTruco {
     public boolean cantar(int jugador, String canto) {
         if (manoTerminada) return false;
 
-        // ✅ Si hay un truco pendiente, permitir que el jugador que debe responder lo suba
         if (gestorTruco.estaEsperandoRespuesta()) {
             int jugadorQueDebeResponder = gestorTruco.getJugadorQueDebeResponder();
             if (jugador != jugadorQueDebeResponder) {
                 System.out.println("No puedes subir el truco, no es tu turno para responder");
                 return false;
             }
-            // ✅ Permitir que suba el canto (gestorTruco.cantar() lo manejará)
         } else {
             // Si no hay truco pendiente, verificar turno normal
             if (jugador != turnoActual) {
@@ -423,7 +400,7 @@ public class JuegoTruco {
             envidoYaResuelto = true;
 
             if (hayGanador()) {
-                System.out.println("🏆 ¡HAY UN GANADOR! J" + getGanadorFinal());
+                System.out.println(" ¡HAY UN GANADOR! J" + getGanadorFinal());
             }
         }
 

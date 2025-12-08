@@ -3,10 +3,7 @@ package trucoarg.personajesDosJugadores;
 import trucoarg.personajesSolitario.CartaSolitario;
 import java.util.List;
 
-/**
- * Maneja los cantos de Envido: Envido, Real Envido y Falta Envido
- * CORREGIDO: Sistema de puntos acumulativos y subida de apuestas
- */
+
 public class Envido extends Canto {
 
     private static final int PUNTOS_ENVIDO = 2;
@@ -113,9 +110,7 @@ public class Envido extends Canto {
                 return true;
 
             case "real envido":
-                // Real envido se puede cantar:
-                // 1. Al inicio (sin canto previo)
-                // 2. Como respuesta a envido (subiendo)
+
                 if (cantoActual == null) {
                     return true;
                 }
@@ -128,9 +123,7 @@ public class Envido extends Canto {
                 return false;
 
             case "falta envido":
-                // Falta envido se puede cantar:
-                // 1. Al inicio (sin canto previo)
-                // 2. Como respuesta a envido o real envido (subiendo)
+
                 if (cantoActual == null) {
                     return true;
                 }
@@ -188,17 +181,12 @@ public class Envido extends Canto {
         return puntosAcumulados;
     }
 
-    /**
-     * Retorna cuántos puntos gana quien rechaza (siempre 1)
-     */
+
     public int getPuntosRechazo() {
         return 1;
     }
 
-    /**
-     * Verifica qué cantos de envido están disponibles como respuesta
-     * al canto actual (para "subir" la apuesta)
-     */
+
     public boolean puedeSubirConEnvido() {
         if (!esperandoRespuesta) return false;
         if (cantoActual == null) return false;
