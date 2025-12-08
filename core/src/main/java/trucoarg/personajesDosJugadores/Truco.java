@@ -16,13 +16,35 @@ public class Truco extends Canto {
             ", esperandoRespuesta=" + esperandoRespuesta +
             ", cantoAceptado=" + cantoAceptado);
 
-        // No se puede cantar si hay un canto pendiente de respuesta
+        // ✅ PERMITIR SUBIR EL CANTO mientras hay respuesta pendiente
+        // El jugador que debe responder puede "subir" en lugar de aceptar/rechazar
         if (esperandoRespuesta) {
-            System.out.println("  RECHAZADO: Hay canto pendiente");
-            return false;
+            int jugadorQueDebeResponder = getJugadorQueDebeResponder();
+
+            // Solo puede subir el jugador que debe responder
+            if (jugador != jugadorQueDebeResponder) {
+                System.out.println("  RECHAZADO: No es tu turno para responder/subir");
+                return false;
+            }
+
+            // Verificar que sea una subida válida
+            if (!esSubidaValida(cantoLower)) {
+                System.out.println("  RECHAZADO: No puedes subir con ese canto");
+                return false;
+            }
+
+            // ✅ SUBIR EL CANTO (cambiar roles)
+            System.out.println("  🔄 J" + jugador + " SUBE el canto de " + cantoActual + " a " + cantoLower);
+            cantoActual = cantoLower;
+            jugadorQueCanto = jugador;  // Ahora este jugador es quien cantó
+            esperandoRespuesta = true;  // Sigue esperando respuesta (del otro)
+            cantoAceptado = false;      // Se resetea porque es un NUEVO canto
+
+            System.out.println("  ✅ Canto subido. Ahora J" + getJugadorQueDebeResponder() + " debe responder");
+            return true;
         }
 
-        // Validar que el canto sea válido según el estado actual
+        // ✅ Canto inicial (sin respuesta pendiente)
         if (!validarCanto(cantoLower, jugador)) {
             return false;
         }
@@ -31,17 +53,36 @@ public class Truco extends Canto {
         cantoActual = cantoLower;
         jugadorQueCanto = jugador;
         esperandoRespuesta = true;
-        cantoAceptado = false; // Se resetea porque es un NUEVO canto
+        cantoAceptado = false;
 
         System.out.println("  ÉXITO: Canto registrado. Esperando respuesta del J" + getJugadorQueDebeResponder());
         return true;
+    }
+
+    /**
+     * ✅ NUEVO: Verifica si el canto es una subida válida
+     */
+    private boolean esSubidaValida(String cantoNuevo) {
+        if (cantoActual == null) return false;
+
+        // Desde TRUCO solo se puede subir a RETRUCO
+        if (cantoActual.equals("truco") && cantoNuevo.equals("retruco")) {
+            return true;
+        }
+
+        // Desde RETRUCO solo se puede subir a VALE CUATRO
+        if (cantoActual.equals("retruco") && (cantoNuevo.equals("vale cuatro") || cantoNuevo.equals("vale 4"))) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
     protected boolean validarCanto(String tipoCanto, int jugador) {
         switch (tipoCanto) {
             case "truco":
-                // Truco solo si no hay ningún canto previo o si está sin resolver
+                // Truco solo si no hay ningún canto previo
                 if (cantoActual != null) {
                     System.out.println("  RECHAZADO: Ya hay canto activo (" + cantoActual + ")");
                     return false;
@@ -98,10 +139,6 @@ public class Truco extends Canto {
         }
     }
 
-    /**
-     * Obtiene los puntos que vale la mano actual
-     * (método de compatibilidad con código existente)
-     */
     public int puntosDeLaMano() {
         return getPuntos();
     }

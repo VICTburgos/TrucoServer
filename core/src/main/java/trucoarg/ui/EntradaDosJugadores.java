@@ -31,52 +31,6 @@ public class EntradaDosJugadores implements InputProcessor {
         return fuePresionado;
     }
 
-    @Override
-    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        // Convertir coordenadas de pantalla a coordenadas de juego
-        float x = screenX;
-        float y = Gdx.graphics.getHeight() - screenY;
-
-        System.out.println("Click detectado en: (" + x + ", " + y + ")");
-
-        // Primero verificar clicks en botones
-        Boton[] botones = pantalla.getBotones();
-        if (botones != null) {
-            for (Boton boton : botones) {
-                if (boton != null && boton.fueClickeado(x, y)) {
-                    System.out.println("Procesando click en botón: " + boton.getTexto());
-                    pantalla.procesarClickBoton(boton);
-                    return true;
-                }
-            }
-        }
-
-        // Luego verificar clicks en cartas del Jugador 1
-        for (int i = 0; i < cartasJugador1.size(); i++) {
-            CartaSolitario carta = cartasJugador1.get(i);
-
-            if (carta.fueClickeada(x, y)) {
-                if (carta.getYaJugadas()) return true;
-
-                pantalla.jugarCarta(carta, 1);
-                return true;
-            }
-        }
-
-        // Finalmente verificar clicks en cartas del Jugador 2
-        for (int i = 0; i < cartasJugador2.size(); i++) {
-            CartaSolitario carta = cartasJugador2.get(i);
-
-            if (carta.fueClickeada(x, y)) {
-                if (carta.getYaJugadas()) return true;
-
-                pantalla.jugarCarta(carta, 2);
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     // 🆕 Detectar cuando se presiona ESC
     @Override
@@ -99,6 +53,12 @@ public class EntradaDosJugadores implements InputProcessor {
 
     // Métodos requeridos por InputProcessor
     @Override public boolean keyTyped(char character) { return false; }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
     @Override public boolean touchUp(int screenX, int screenY, int pointer, int button) { return false; }
     @Override public boolean touchCancelled(int screenX, int screenY, int pointer, int button) { return false; }
     @Override public boolean touchDragged(int screenX, int screenY, int pointer) { return false; }
