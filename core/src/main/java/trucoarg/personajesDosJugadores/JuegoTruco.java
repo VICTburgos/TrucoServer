@@ -382,7 +382,7 @@ public class JuegoTruco {
             envidoYaResuelto = true;
 
             if (hayGanador()) {
-                System.out.println("🏆 ¡HAY UN GANADOR! J" + getGanadorFinal());
+                System.out.println(" ¡HAY UN GANADOR! J" + getGanadorFinal());
             }
 
         } else if (resultado > 0) {

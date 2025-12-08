@@ -43,13 +43,12 @@ public class PantallaDosJugadores implements Screen, GameController {
             juegoTerminado = true;
             tiempoVictoria = 0f;
             int ganador = juego.getGanadorFinal();
-            System.out.println("🏆 VICTORIA: J" + ganador);
+            System.out.println(" VICTORIA: J" + ganador);
         }
     }
 
     @Override
     public void render(float delta) {
-        //  SOLO LÓGICA - Sin renderizado
         if (Gdx.input.isKeyJustPressed(com.badlogic.gdx.Input.Keys.ESCAPE)) {
             volverAlMenuConMusica();
             return;
@@ -100,14 +99,12 @@ public class PantallaDosJugadores implements Screen, GameController {
             return "ninguno";
         }
 
-        // ========== PRIORIDAD 1: TRUCO PENDIENTE ==========
         if (juego.getGestorTruco().estaEsperandoRespuesta()) {
             int jugadorQueDebeResponder = juego.getJugadorQueDebeResponder();
 
             if (jugador == jugadorQueDebeResponder) {
                 StringBuilder sb = new StringBuilder("quiero,noquiero");
 
-                //  Puede subir el truco mientras responde
                 String cantoActual = juego.getGestorTruco().getCantoActual();
 
                 if (cantoActual.equals("truco")) {
@@ -115,11 +112,10 @@ public class PantallaDosJugadores implements Screen, GameController {
                 } else if (cantoActual.equals("retruco")) {
                     sb.append(",vale4");
                 }
-                // Si es VALE 4, no hay más para subir
 
                 return sb.toString();
             } else {
-                return "ninguno"; // El otro jugador espera
+                return "ninguno";
             }
         }
 

@@ -22,15 +22,15 @@ public class ServerThread extends Thread {
         this.gameController = gameController;
         try {
             socket = new DatagramSocket(serverPort);
-            System.out.println("✅ Servidor iniciado en puerto " + serverPort);
+            System.out.println(" Servidor iniciado en puerto " + serverPort);
         } catch (SocketException e) {
-            System.err.println("❌ Error creando socket del servidor: " + e.getMessage());
+            System.err.println(" Error creando socket del servidor: " + e.getMessage());
         }
     }
 
     @Override
     public void run() {
-        System.out.println("🎮 ServerThread ejecutándose - Esperando clientes...");
+        System.out.println(" ServerThread ejecutándose - Esperando clientes...");
         do {
             DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
             try {
@@ -38,7 +38,7 @@ public class ServerThread extends Thread {
                 processMessage(packet);
             } catch (IOException e) {
                 if (!end) {
-                    System.err.println("❌ Error recibiendo paquete: " + e.getMessage());
+                    System.err.println(" Error recibiendo paquete: " + e.getMessage());
                 }
             }
         } while(!end);
@@ -48,12 +48,11 @@ public class ServerThread extends Thread {
         String message = (new String(packet.getData())).trim();
         String[] parts = message.split(":");
         int index = findClientIndex(packet);
-        System.out.println("📨 Mensaje recibido: " + message);
+        System.out.println(" Mensaje recibido: " + message);
 
-        // ========== MANEJO DE CONEXIÓN ==========
         if(parts[0].equals("Connect")){
             if(index != -1) {
-                System.out.println("⚠️ Cliente ya conectado");
+                System.out.println("⚠ Cliente ya conectado");
                 this.sendMessage("AlreadyConnected", packet.getAddress(), packet.getPort());
                 return;
             }
@@ -63,47 +62,44 @@ public class ServerThread extends Thread {
                 Client newClient = new Client(connectedClients, packet.getAddress(), packet.getPort());
                 clients.add(newClient);
                 sendMessage("Connected:" + connectedClients, packet.getAddress(), packet.getPort());
-                System.out.println("✅ Cliente " + connectedClients + " conectado desde " +
+                System.out.println("Cliente " + connectedClients + " conectado desde " +
                     packet.getAddress() + ":" + packet.getPort());
 
                 if(connectedClients == MAX_CLIENTS) {
-                    System.out.println("🎮 Ambos clientes conectados - Enviando señal Start");
+                    System.out.println(" Ambos clientes conectados - Enviando señal Start");
                     sendMessageToAll("Start");
                     Gdx.app.postRunnable(() -> gameController.startGame());
                 }
 
             } else {
-                System.out.println("❌ Servidor lleno");
+                System.out.println(" Servidor lleno");
                 sendMessage("Full", packet.getAddress(), packet.getPort());
             }
-            return; // ✅ Importante: salir después de procesar Connect
         }
 
-        // ========== VERIFICAR CLIENTE CONECTADO ==========
         else if(index == -1){
-            System.out.println("❌ Cliente no conectado intentando enviar: " + parts[0]);
+            System.out.println("Cliente no conectado intentando enviar: " + parts[0]);
             this.sendMessage("NotConnected", packet.getAddress(), packet.getPort());
             return;
         }
 
-        // ========== PROCESAR OTROS MENSAJES ==========
         else {
             Client client = clients.get(index);
-            System.out.println("📨 Procesando mensaje de Cliente #" + client.getNum() + ": " + parts[0]);
+            System.out.println(" Procesando mensaje de Cliente #" + client.getNum() + ": " + parts[0]);
 
             switch(parts[0]){
                 case "Setearpuntos":
                     int puntos = Integer.parseInt(parts[1]);
-                    System.out.println("🎯 Cliente #" + client.getNum() + " solicita iniciar partida a " + puntos + " puntos");
+                    System.out.println("Cliente #" + client.getNum() + " solicita iniciar partida a " + puntos + " puntos");
                     Gdx.app.postRunnable(() -> gameController.setearPuntosIniciales(puntos));
                     break;
 
                 case "JugarCarta":
                     int jugador = Integer.parseInt(parts[1]);
                     int idCarta = Integer.parseInt(parts[2]);
-                    System.out.println("🎴 Servidor recibe: J" + jugador + " juega carta " + idCarta);
+                    System.out.println(" Servidor recibe: J" + jugador + " juega carta " + idCarta);
                     Gdx.app.postRunnable(() -> {
-                        System.out.println("🔄 Ejecutando procesarJugada");
+                        System.out.println(" Ejecutando procesarJugada");
                         gameController.procesarJugada(jugador, idCarta);
                     });
                     break;
@@ -111,17 +107,15 @@ public class ServerThread extends Thread {
                 case "CantarTruco":
                     int jugadorTruco = Integer.parseInt(parts[1]);
                     String tipoCanto = parts[2];
-                    System.out.println("🎺 J" + jugadorTruco + " canta " + tipoCanto.toUpperCase());
+                    System.out.println( "J" + jugadorTruco + " canta " + tipoCanto.toUpperCase());
                     Gdx.app.postRunnable(() -> {
                         boolean exito = gameController.cantarTruco(jugadorTruco, tipoCanto);
 
                         if (exito) {
-                            // ✅ Primero notificar el canto a todos
                             String mensaje = "CantoRealizado:truco:" + jugadorTruco + ":" + tipoCanto;
                             ((PantallaDosJugadores) gameController).server.sendMessageToAll(mensaje);
 
-                            // ✅ DESPUÉS actualizar botones
-                            // Ahora calcularBotonesVisibles() verá que hay un canto pendiente
+
                             ((PantallaDosJugadores) gameController).enviarEstadoBotonesATodos();
                         }
                     });
@@ -130,40 +124,36 @@ public class ServerThread extends Thread {
                 case "CantarEnvido":
                     int jugadorEnvido = Integer.parseInt(parts[1]);
                     String tipoEnvido = parts[2];
-                    System.out.println("🎵 J" + jugadorEnvido + " canta " + tipoEnvido.toUpperCase());
+                    System.out.println(" J" + jugadorEnvido + " canta " + tipoEnvido.toUpperCase());
                     Gdx.app.postRunnable(() -> {
                         boolean exito = gameController.cantarEnvido(jugadorEnvido, tipoEnvido);
 
                         if (exito) {
-                            // ✅ Primero notificar el canto
                             String mensaje = "CantoRealizado:envido:" + jugadorEnvido + ":" + tipoEnvido;
                             ((PantallaDosJugadores) gameController).server.sendMessageToAll(mensaje);
 
-                            // ✅ DESPUÉS actualizar botones
                             ((PantallaDosJugadores) gameController).enviarEstadoBotonesATodos();
                         }
                     });
                     break;
 
-                // 🆕 RESPUESTAS A CANTOS
                 case "ResponderCanto":
                     int jugadorRespuesta = Integer.parseInt(parts[1]);
                     String respuesta = parts[2];
                     boolean quiero = respuesta.equalsIgnoreCase("quiero");
-                    System.out.println("💬 J" + jugadorRespuesta + " responde: " + (quiero ? "QUIERO" : "NO QUIERO"));
+                    System.out.println(" J" + jugadorRespuesta + " responde: " + (quiero ? "QUIERO" : "NO QUIERO"));
                     Gdx.app.postRunnable(() -> procesarRespuestaCanto(jugadorRespuesta, quiero));
                     break;
 
-                // 🆕 IR AL MAZO
                 case "IrAlMazo":
                     int jugadorMazo = Integer.parseInt(parts[1]);
-                    System.out.println("🃏 J" + jugadorMazo + " se va al mazo");
+                    System.out.println(" J" + jugadorMazo + " se va al mazo");
                     Gdx.app.postRunnable(() -> procesarIrAlMazo(jugadorMazo));
                     break;
 
                 case "SolicitarBotones":
                     int jugadorSolicitante = Integer.parseInt(parts[1]);
-                    System.out.println("📨 J" + jugadorSolicitante + " solicita estado de botones");
+                    System.out.println("J" + jugadorSolicitante + " solicita estado de botones");
                     Gdx.app.postRunnable(() -> {
                         PantallaDosJugadores pantalla = (PantallaDosJugadores) gameController;
                         pantalla.enviarEstadoBotones(jugadorSolicitante);
@@ -171,72 +161,65 @@ public class ServerThread extends Thread {
                     break;
 
                 default:
-                    System.out.println("⚠️ Mensaje desconocido: " + parts[0]);
+                    System.out.println(" Mensaje desconocido: " + parts[0]);
                     break;
             }
         }
     }
 
-    // ========== 🆕 MÉTODOS PARA PROCESAR CANTOS ==========
 
     private void procesarCantoTruco(int jugador, String tipoCanto) {
-        System.out.println("🎺 Procesando canto de truco: J" + jugador + " - " + tipoCanto);
+        System.out.println(" Procesando canto de truco: J" + jugador + " - " + tipoCanto);
 
         boolean exito = gameController.cantarTruco(jugador, tipoCanto);
 
         if (exito) {
-            // ✅ Notificar a TODOS los clientes que hubo un canto
             String mensaje = "CantoRealizado:truco:" + jugador + ":" + tipoCanto;
             sendMessageToAll(mensaje);
-            System.out.println("📤 Enviado a todos: " + mensaje);
+            System.out.println(" Enviado a todos: " + mensaje);
         } else {
-            System.out.println("❌ Canto de truco rechazado por lógica del juego");
+            System.out.println(" Canto de truco rechazado por lógica del juego");
         }
     }
 
     private void procesarCantoEnvido(int jugador, String tipoEnvido) {
-        System.out.println("🎵 Procesando canto de envido: J" + jugador + " - " + tipoEnvido);
+        System.out.println(" Procesando canto de envido: J" + jugador + " - " + tipoEnvido);
 
         boolean exito = gameController.cantarEnvido(jugador, tipoEnvido);
 
         if (exito) {
-            // ✅ Notificar a TODOS los clientes que hubo un canto
             String mensaje = "CantoRealizado:envido:" + jugador + ":" + tipoEnvido;
             sendMessageToAll(mensaje);
-            System.out.println("📤 Enviado a todos: " + mensaje);
+            System.out.println(" Enviado a todos: " + mensaje);
         } else {
-            System.out.println("❌ Canto de envido rechazado por lógica del juego");
+            System.out.println(" Canto de envido rechazado por lógica del juego");
         }
     }
 
 
     private void procesarRespuestaCanto(int jugador, boolean quiero) {
-        System.out.println("💬 Procesando respuesta: J" + jugador + " - " + (quiero ? "QUIERO" : "NO QUIERO"));
+        System.out.println(" Procesando respuesta: J" + jugador + " - " + (quiero ? "QUIERO" : "NO QUIERO"));
 
         int resultado = gameController.responderCanto(jugador, quiero);
 
-        // ✅ Notificar a TODOS los clientes la respuesta
         String respuesta = quiero ? "quiero" : "noquiero";
         String mensaje = "RespuestaCanto:" + jugador + ":" + respuesta + ":" + resultado;
         sendMessageToAll(mensaje);
-        System.out.println("📤 Enviado a todos: " + mensaje);
+        System.out.println(" Enviado a todos: " + mensaje);
 
-        // ✅ Enviar puntos actualizados
         String mensajePuntos = "Puntos:" + gameController.getPuntosJ1() + ":" + gameController.getPuntosJ2();
         sendMessageToAll(mensajePuntos);
-        System.out.println("📤 Puntos actualizados: " + mensajePuntos);
+        System.out.println(" Puntos actualizados: " + mensajePuntos);
     }
 
     private void procesarIrAlMazo(int jugador) {
-        System.out.println("🃏 Procesando ir al mazo: J" + jugador);
+        System.out.println(" Procesando ir al mazo: J" + jugador);
 
         gameController.irAlMazo(jugador);
 
-        // ✅ Notificar a todos los clientes
         sendMessageToAll("JugadorAlMazo:" + jugador);
         System.out.println("📤 Enviado: JugadorAlMazo:" + jugador);
 
-        // ✅ Enviar puntos actualizados
         String mensajePuntos = "Puntos:" + gameController.getPuntosJ1() + ":" + gameController.getPuntosJ2();
         sendMessageToAll(mensajePuntos);
         System.out.println("📤 Puntos actualizados: " + mensajePuntos);
@@ -261,28 +244,28 @@ public class ServerThread extends Thread {
         DatagramPacket packet = new DatagramPacket(byteMessage, byteMessage.length, clientIp, clientPort);
         try {
             socket.send(packet);
-            System.out.println("📤 Mensaje enviado a " + clientIp + ":" + clientPort + " -> " + message);
+            System.out.println(" Mensaje enviado a " + clientIp + ":" + clientPort + " -> " + message);
         } catch (IOException e) {
-            System.err.println("❌ Error enviando mensaje: " + e.getMessage());
+            System.err.println(" Error enviando mensaje: " + e.getMessage());
         }
     }
 
     public void sendMessageToAll(String message) {
-        System.out.println("📢 Enviando a todos los clientes (" + clients.size() + "): " + message);
+        System.out.println("Enviando a todos los clientes (" + clients.size() + "): " + message);
         for (Client client : clients) {
             sendMessage(message, client.getIp(), client.getPort());
         }
     }
 
     public void terminate(){
-        System.out.println("🛑 Terminando ServerThread...");
+        System.out.println("Terminando ServerThread...");
         this.end = true;
         socket.close();
         this.interrupt();
     }
 
     public void disconnectClients() {
-        System.out.println("👋 Desconectando todos los clientes...");
+        System.out.println(" Desconectando todos los clientes...");
         for (Client client : clients) {
             sendMessage("Disconnect", client.getIp(), client.getPort());
         }
